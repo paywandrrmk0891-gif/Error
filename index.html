@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ERROR</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#000000">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg:#000000;
+    --panel:#0a0d0d;
+    --line:#1c2526;
+    --line-bright:#2a3a3c;
+    --cyan:#3ee6e0;
+    --cyan-dim:#1f8a87;
+    --text:#d7e6e5;
+    --text-dim:#5e7a79;
+    --amber:#e0a030;
+    --red:#e2596b;
+    --green:#5ed9a0;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100%;}
+  body{
+    background:var(--bg);
+    background-image:
+      linear-gradient(rgba(62,230,224,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(62,230,224,0.025) 1px, transparent 1px),
+      radial-gradient(circle at 50% 0%, rgba(62,230,224,0.05), transparent 45%);
+    background-size:24px 24px, 24px 24px, 100% 100%;
+    font-family:'JetBrains Mono', monospace;
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    overflow-x:hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    width:100%;
+    max-width:560px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:18px 16px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  .hamburger{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--cyan);
+    font-size:16px;
+    padding:8px 11px;
+    cursor:pointer;
+    line-height:1;
+  }
+  .hamburger:active{ background:rgba(62,230,224,0.1); }
+  .brand{
+    font-family:'Orbitron', sans-serif;
+    font-weight:800;
+    font-size:19px;
+    letter-spacing:3px;
+    color:var(--text);
+  }
+  .brand span{ color:var(--cyan); }
+  .nav-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--cyan);
+    font-size:16px;
+    padding:8px 13px;
+    cursor:pointer;
+    line-height:1;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .nav-btn:active{ background:rgba(62,230,224,0.1); }
+
+  /* ---------- Day counter strip ---------- */
+  .counter-strip{
+    width:100%;
+    max-width:560px;
+    display:flex;
+    justify-content:center;
+    gap:18px;
+    padding:12px 16px 4px;
+    font-size:10.5px;
+    letter-spacing:1px;
+    color:var(--text-dim);
+  }
+  .counter-strip b{ color:var(--cyan); font-weight:600; }
+
+  /* ---------- Card deck ---------- */
+  .deck-wrap{
+    width:100%;
+    max-width:560px;
+    flex:1;
+    padding:14px 14px 110px;
+    position:relative;
+  }
+  .deck{
+    position:relative;
+    min-height:520px;
+  }
+  .stack-card{
+    position:absolute;
+    top:0; left:0; right:0;
+    background:var(--panel);
+    border:1px solid var(--line);
+    height:520px;
+    z-index:1;
+  }
+  .stack-card.s2{ transform:translateY(10px) scale(0.97); opacity:0.5; z-index:0; }
+  .stack-card.s3{ transform:translateY(20px) scale(0.94); opacity:0.25; z-index:-1; }
+
+  .page{
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:20px 18px 24px;
+    position:relative;
+    z-index:2;
+    touch-action:pan-y;
+    user-select:none;
+  }
+  .page::before{
+    content:"";
+    position:absolute;
+    top:-1px; left:-1px;
+    width:14px; height:14px;
+    border-top:2px solid var(--cyan);
+    border-left:2px solid var(--cyan);
+  }
+  .page::after{
+    content:"";
+    position:absolute;
+    bottom:-1px; right:-1px;
+    width:14px; height:14px;
+    border-bottom:2px solid var(--cyan);
+    border-right:2px solid var(--cyan);
+  }
+  .page.dragging{ transition:none; }
+  .page.snap-back{ transition:transform 220ms ease; }
+  .page.fly-next{ animation:flyNext 240ms ease forwards; }
+  .page.fly-prev{ animation:flyPrev 240ms ease forwards; }
+  @keyframes flyNext{
+    to{ transform:translateX(-120%) rotate(-6deg); opacity:0; }
+  }
+  @keyframes flyPrev{
+    to{ transform:translateX(120%) rotate(6deg); opacity:0; }
+  }
+  .page.enter{ animation:enterCard 220ms ease; }
+  @keyframes enterCard{
+    from{ opacity:0; transform:scale(0.96); }
+    to{ opacity:1; transform:scale(1); }
+  }
+
+  .swipe-hint{
+    text-align:center;
+    font-size:10px;
+    letter-spacing:1.5px;
+    color:var(--text-dim);
+    padding:10px 0 0;
+  }
+  .swipe-hint span{ color:var(--cyan-dim); }
+
+  .date-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    margin-bottom:2px;
+  }
+  .date-hand{
+    font-family:'Orbitron', sans-serif;
+    font-weight:700;
+    font-size:22px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    line-height:1.2;
+    color:var(--text);
+  }
+  .date-sub{
+    font-size:11px;
+    letter-spacing:1px;
+    color:var(--cyan-dim);
+    margin-top:3px;
+  }
+  .date-sub::before{ content:"// "; color:var(--text-dim); }
+  .day-mood{ font-size:21px; cursor:pointer; border:1px solid var(--line); padding:6px 9px; }
+
+  .rule{
+    border:none;
+    border-top:1px solid var(--line);
+    margin:16px 0 16px;
+  }
+
+  .section-label{
+    font-size:11px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--cyan);
+    margin:0 0 12px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .section-label::before{ content:"["; color:var(--text-dim); }
+  .section-label::after{ content:"]"; color:var(--text-dim); }
+
+  /* ---------- Tasks ---------- */
+  .tasks{ list-style:none; margin:0; padding:0; max-height:280px; overflow-y:auto; }
+  .task{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:11px 2px;
+    border-bottom:1px solid var(--line);
+  }
+  .task:last-child{ border-bottom:none; }
+  .check{
+    width:20px; height:20px;
+    border-radius:0;
+    border:1.5px solid var(--cyan-dim);
+    flex:none;
+    margin-top:1px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    background:transparent;
+    transition:background 150ms, border-color 150ms, transform 120ms;
+  }
+  .check:active{ transform:scale(0.9); }
+  .check.done{ background:var(--green); border-color:var(--green); }
+  .check.done::after{ content:"✓"; color:#06120c; font-size:12px; font-weight:700; }
+  .task-text{ flex:1; font-size:14.5px; line-height:1.45; word-break:break-word; padding-top:1px; color:var(--text); }
+  .task.done .task-text{ color:var(--text-dim); text-decoration:line-through; text-decoration-color:var(--green); }
+  .task-time{
+    font-size:12px;
+    color:var(--amber);
+    flex:none;
+    padding-top:2px;
+    min-width:42px;
+    letter-spacing:0.5px;
+  }
+  .task-del{ background:none; border:none; color:var(--text-dim); font-size:15px; cursor:pointer; padding:2px 4px; flex:none; }
+  .task-del:active{ color:var(--red); }
+
+  .empty-line{
+    padding:16px 2px;
+    color:var(--text-dim);
+    font-size:13px;
+    letter-spacing:0.5px;
+  }
+  .empty-line::before{ content:"> "; color:var(--cyan-dim); }
+
+  .add-row{ display:flex; gap:8px; padding:14px 0 2px; align-items:center; }
+  .add-row input[type=time]{
+    border:1px solid var(--line);
+    background:transparent;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    color:var(--text);
+    padding:8px 6px;
+    width:84px;
+    flex:none;
+    color-scheme:dark;
+  }
+  .add-row input[type=text]{
+    flex:1;
+    border:1px solid var(--line);
+    border-left:none;
+    border-right:none;
+    border-top:none;
+    background:transparent;
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+    padding:9px 4px;
+    color:var(--text);
+  }
+  .add-row input[type=text]::placeholder{ color:var(--text-dim); }
+  .add-row input:focus{ outline:none; border-color:var(--cyan); }
+  .add-btn{
+    background:var(--cyan);
+    color:#06120c;
+    border:none;
+    width:34px; height:34px;
+    font-size:18px;
+    font-weight:700;
+    flex:none;
+    cursor:pointer;
+  }
+  .add-btn:active{ transform:scale(0.93); }
+
+  .notif-banner{
+    margin:16px 0 0;
+    background:rgba(224,160,48,0.08);
+    border:1px solid rgba(224,160,48,0.35);
+    padding:11px 12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    font-size:11.5px;
+    color:var(--amber);
+    letter-spacing:0.3px;
+  }
+  .notif-banner button{
+    background:var(--amber);
+    color:#1a1208;
+    border:none;
+    padding:7px 12px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:0.5px;
+    flex:none;
+    cursor:pointer;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  /* ---------- Diary mode ---------- */
+  textarea.diary{
+    width:100%;
+    min-height:280px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    font-family:'JetBrains Mono', monospace;
+    font-size:14px;
+    line-height:1.7;
+    color:var(--text);
+    resize:vertical;
+    padding:12px;
+    outline:none;
+  }
+  textarea.diary::placeholder{ color:var(--text-dim); }
+  textarea.diary:focus{ border-color:var(--cyan); }
+
+  .diary-prompt{
+    border:1px solid var(--cyan-dim);
+    background:rgba(62,230,224,0.05);
+    padding:11px 12px;
+    font-size:13px;
+    line-height:1.5;
+    color:var(--cyan);
+    margin-bottom:12px;
+  }
+  .diary-prompt::before{ content:"> "; color:var(--text-dim); }
+
+  .diary-meta{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 2px 0;
+    font-size:10.5px;
+    letter-spacing:0.5px;
+    color:var(--text-dim);
+  }
+  .diary-meta span:last-child{ color:var(--amber); }
+
+  /* ---------- Bottom nav ---------- */
+  .bottombar{
+    position:fixed;
+    bottom:0; left:0; right:0;
+    display:flex;
+    justify-content:center;
+    padding:10px 16px calc(12px + env(safe-area-inset-bottom));
+    background:linear-gradient(transparent, #000 40%);
+  }
+  .bottombar-inner{
+    width:100%;
+    max-width:560px;
+    display:flex;
+    background:var(--panel);
+    border:1px solid var(--line);
+  }
+  .tab{
+    flex:1;
+    background:none;
+    border:none;
+    border-right:1px solid var(--line);
+    color:var(--text);
+    opacity:0.5;
+    padding:11px 4px;
+    font-size:10.5px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+    cursor:pointer;
+    transition:background 150ms, opacity 150ms, color 150ms;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .tab:last-child{ border-right:none; }
+  .tab .ic{ font-size:17px; }
+  .tab.active{ opacity:1; background:rgba(62,230,224,0.1); color:var(--cyan); }
+
+  /* ---------- Drawer (day list + plan/diary switch combined) ---------- */
+  .drawer-overlay{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.7);
+    display:none;
+    z-index:50;
+  }
+  .drawer-overlay.open{ display:block; }
+  .drawer{
+    position:fixed;
+    top:0; left:0; bottom:0;
+    width:84%;
+    max-width:320px;
+    background:#06080a;
+    border-right:1px solid var(--line-bright);
+    padding:22px 16px calc(20px + env(safe-area-inset-bottom));
+    transform:translateX(-100%);
+    transition:transform 200ms ease;
+    overflow-y:auto;
+    z-index:51;
+  }
+  .drawer-overlay.open .drawer{ transform:translateX(0); }
+  .drawer h3{
+    font-family:'Orbitron', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin:0 0 14px;
+    color:var(--cyan);
+  }
+  .drawer-mode{
+    display:flex;
+    border:1px solid var(--line);
+    margin-bottom:16px;
+  }
+  .drawer-mode button{
+    flex:1;
+    background:none;
+    border:none;
+    color:var(--text-dim);
+    font-size:11px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    padding:10px 0;
+    cursor:pointer;
+    border-right:1px solid var(--line);
+    font-family:'JetBrains Mono', monospace;
+  }
+  .drawer-mode button:last-child{ border-right:none; }
+  .drawer-mode button.active{ background:rgba(62,230,224,0.12); color:var(--cyan); }
+
+  .drawer-today{
+    width:100%;
+    background:var(--cyan);
+    color:#06120c;
+    border:none;
+    padding:11px 0;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    cursor:pointer;
+    margin-bottom:14px;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .drawer-section-label{
+    font-size:10px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin:14px 0 8px;
+  }
+  .day-pick{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:13px 4px;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .day-pick.current{ color:var(--cyan); }
+  .day-pick .sub{ color:var(--text-dim); font-size:11px; }
+  .day-pick .dot{ width:6px; height:6px; background:var(--green); flex:none; }
+  .drawer-empty{ padding:14px 4px; color:var(--text-dim); font-size:12.5px; }
+
+  /* ---------- Sheets (mood / timer) ---------- */
+  .sheet-overlay{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.7);
+    display:none;
+    align-items:flex-end;
+    z-index:40;
+  }
+  .sheet-overlay.open{ display:flex; }
+  .sheet{
+    width:100%;
+    background:#06080a;
+    border:1px solid var(--line-bright);
+    border-bottom:none;
+    padding:18px 18px calc(20px + env(safe-area-inset-bottom));
+    max-height:70vh;
+    overflow-y:auto;
+  }
+  .sheet h3{
+    font-family:'Orbitron', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    margin:0 0 14px;
+    color:var(--cyan);
+  }
+
+  .timer-display{
+    font-family:'Orbitron', sans-serif;
+    font-weight:700;
+    font-size:54px;
+    letter-spacing:2px;
+    text-align:center;
+    color:var(--text);
+    padding:14px 0 8px;
+    text-shadow:0 0 14px rgba(62,230,224,0.35);
+  }
+  .timer-presets{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; padding:6px 0 16px; }
+  .timer-presets button{
+    background:none; color:var(--cyan);
+    border:1px solid var(--cyan-dim);
+    padding:9px 15px; font-size:13px; cursor:pointer;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .timer-presets button:active{ background:rgba(62,230,224,0.12); }
+  .timer-custom{ display:flex; gap:8px; padding:0 0 14px; }
+  .timer-custom input{
+    flex:1; border:1px solid var(--line); border-radius:0;
+    padding:10px 12px; font-size:13px; background:transparent; color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+  }
+  .timer-custom input:focus{ outline:none; border-color:var(--cyan); }
+  .timer-custom button{
+    background:var(--cyan); color:#06120c; border:none;
+    padding:0 18px; font-size:13px; font-weight:700; cursor:pointer;
+    font-family:'JetBrains Mono', monospace;
+  }
+  .timer-controls{ display:flex; justify-content:center; }
+  .timer-controls button{
+    background:none; color:var(--red); border:1px solid var(--red);
+    padding:10px 22px; font-size:13px; cursor:pointer;
+    font-family:'JetBrains Mono', monospace;
+  }
+
+  ::-webkit-scrollbar{ width:0; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <button class="hamburger" id="openDrawer" aria-label="Open menu">☰</button>
+    <div class="brand">ERR<span>OR</span></div>
+    <button class="nav-btn" id="nextDay" aria-label="Next day">›</button>
+  </div>
+
+  <div class="counter-strip" id="counterStrip">
+    DAY <b id="dayOfYear">—</b> · MONTH <b id="monthNum">—</b> · <b id="yearNum">—</b>
+  </div>
+
+  <div class="deck-wrap">
+    <div class="deck">
+      <div class="stack-card s3"></div>
+      <div class="stack-card s2"></div>
+
+      <div class="page" id="page">
+
+        <div class="date-row">
+          <div>
+            <div class="date-hand" id="dateHand">—</div>
+            <div class="date-sub" id="dateSub">—</div>
+          </div>
+          <div class="day-mood" id="moodDisplay" title="Tap to set mood">🙂</div>
+        </div>
+
+        <hr class="rule">
+
+        <!-- PLAN VIEW -->
+        <div id="planView">
+          <div class="section-label">Tasks</div>
+          <ul class="tasks" id="taskList"></ul>
+          <div class="add-row">
+            <input type="time" id="taskTime">
+            <input type="text" id="taskInput" placeholder="new task…">
+            <button class="add-btn" id="addTaskBtn">+</button>
+          </div>
+          <div class="notif-banner" id="notifBanner" style="display:none;">
+            <span>ENABLE NOTIFICATIONS FOR TIMED REMINDERS</span>
+            <button id="enableNotifBtn">ENABLE</button>
+          </div>
+        </div>
+
+        <!-- DIARY VIEW -->
+        <div id="diaryView" style="display:none;">
+          <div class="section-label">Log entry</div>
+          <div class="diary-prompt" id="diaryPrompt">—</div>
+          <textarea class="diary" id="diaryText" placeholder="start writing…"></textarea>
+          <div class="diary-meta">
+            <span id="diaryWordCount">0 words</span>
+            <span id="diaryStreak"></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="swipe-hint">‹ <span>SWIPE</span> TO CHANGE DAY ›</div>
+  </div>
+
+  <div class="bottombar">
+    <div class="bottombar-inner">
+      <button class="tab active" id="tabToday">
+        <span class="ic">◉</span> Today
+      </button>
+      <button class="tab" id="tabMood">
+        <span class="ic">◐</span> Mood
+      </button>
+      <button class="tab" id="tabTimer">
+        <span class="ic">◷</span> Timer
+      </button>
+    </div>
+  </div>
+
+  <div class="drawer-overlay" id="drawerOverlay">
+    <div class="drawer">
+      <h3>Error menu</h3>
+
+      <div class="drawer-mode" id="drawerMode">
+        <button class="active" id="drawerModePlan">PLAN MODE</button>
+        <button id="drawerModeDiary">LOG MODE</button>
+      </div>
+
+      <button class="drawer-today" id="drawerToday">Jump to today</button>
+
+      <div class="drawer-section-label" id="archiveLabel">Archive</div>
+      <div id="dayList"></div>
+    </div>
+  </div>
+
+  <div class="sheet-overlay" id="moodOverlay">
+    <div class="sheet">
+      <h3>Status check</h3>
+      <div style="display:flex; justify-content:space-around; padding:10px 0 4px; font-size:30px;">
+        <span class="mood-opt" data-mood="😊">😊</span>
+        <span class="mood-opt" data-mood="🙂">🙂</span>
+        <span class="mood-opt" data-mood="😐">😐</span>
+        <span class="mood-opt" data-mood="😕">😕</span>
+        <span class="mood-opt" data-mood="😣">😣</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-overlay" id="timerOverlay">
+    <div class="sheet">
+      <h3>Countdown</h3>
+      <div class="timer-display" id="timerDisplay">00:00</div>
+      <div class="timer-presets" id="timerPresets">
+        <button data-min="5">5M</button>
+        <button data-min="10">10M</button>
+        <button data-min="15">15M</button>
+        <button data-min="25">25M</button>
+        <button data-min="60">60M</button>
+      </div>
+      <div class="timer-custom">
+        <input type="number" id="timerCustomMin" placeholder="custom min" min="1">
+        <button id="timerCustomStart">START</button>
+      </div>
+      <div class="timer-controls" id="timerControls" style="display:none;">
+        <button id="timerCancel">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function(){
+  "use strict";
+
+  const STORE_KEY = "daybook_entries_v1";
+  const dayNames = ["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"];
+  const monthNames = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+
+  const DIARY_PROMPTS = [
+    "What actually happened today?",
+    "What took up most of your energy today?",
+    "What's one thing you'd do differently if you replayed today?",
+    "What's something you didn't expect today?",
+    "Who did you talk to today, and how did it go?",
+    "What's stuck in your head right now?",
+    "What went better than you thought it would?",
+    "What's something you're avoiding writing about?",
+    "Rate today 1-10 and explain why.",
+    "What are you looking forward to tomorrow?",
+    "What's something small that actually felt good today?",
+    "What's been on your mind that you haven't said out loud?",
+    "If today had a headline, what would it be?",
+    "What drained you today, and what gave you energy?",
+    "What's one decision you made today, big or small?"
+  ];
+  function promptFor(d){
+    const idx = dayOfYear(d) % DIARY_PROMPTS.length;
+    return DIARY_PROMPTS[idx];
+  }
+
+  let store = {};
+  try{ store = JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); }catch(e){ store = {}; }
+
+  let current = new Date();
+  current.setHours(0,0,0,0);
+  let mode = "plan";
+
+  function keyFor(d){
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  }
+  function getEntry(d){
+    const k = keyFor(d);
+    if(!store[k]) store[k] = { tasks: [], diary: "", mood: "🙂" };
+    return store[k];
+  }
+  function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
+
+  function fmtDateHand(d){
+    const today = new Date(); today.setHours(0,0,0,0);
+    const diff = Math.round((d - today)/86400000);
+    if(diff === 0) return "TODAY";
+    if(diff === -1) return "YESTERDAY";
+    if(diff === 1) return "TOMORROW";
+    return dayNames[d.getDay()];
+  }
+  function fmtDateSub(d){ return monthNames[d.getMonth()] + " " + String(d.getDate()).padStart(2,"0") + " " + d.getFullYear(); }
+  function dayOfYear(d){
+    const utcDay = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+    const utcStart = Date.UTC(d.getFullYear(), 0, 1);
+    return Math.round((utcDay - utcStart) / 86400000) + 1;
+  }
+
+  const taskList = document.getElementById("taskList");
+  const dateHand = document.getElementById("dateHand");
+  const dateSub = document.getElementById("dateSub");
+  const diaryText = document.getElementById("diaryText");
+  const diaryPrompt = document.getElementById("diaryPrompt");
+  const diaryWordCount = document.getElementById("diaryWordCount");
+  const diaryStreak = document.getElementById("diaryStreak");
+  const moodDisplay = document.getElementById("moodDisplay");
+  const pageEl = document.getElementById("page");
+  const planView = document.getElementById("planView");
+  const diaryView = document.getElementById("diaryView");
+  const drawerModePlanBtn = document.getElementById("drawerModePlan");
+  const drawerModeDiaryBtn = document.getElementById("drawerModeDiary");
+  const dayOfYearEl = document.getElementById("dayOfYear");
+  const monthNumEl = document.getElementById("monthNum");
+  const yearNumEl = document.getElementById("yearNum");
+
+  function setMode(m){
+    mode = m;
+    planView.style.display = (m === "plan") ? "block" : "none";
+    diaryView.style.display = (m === "diary") ? "block" : "none";
+    drawerModePlanBtn.classList.toggle("active", m === "plan");
+    drawerModeDiaryBtn.classList.toggle("active", m === "diary");
+    refreshDrawerList();
+  }
+  drawerModePlanBtn.onclick = ()=>setMode("plan");
+  drawerModeDiaryBtn.onclick = ()=>setMode("diary");
+
+  function render(){
+    const entry = getEntry(current);
+    dateHand.textContent = fmtDateHand(current);
+    dateSub.textContent = fmtDateSub(current);
+    moodDisplay.textContent = entry.mood || "🙂";
+
+    dayOfYearEl.textContent = dayOfYear(current);
+    monthNumEl.textContent = monthNames[current.getMonth()];
+    yearNumEl.textContent = current.getFullYear();
+
+    taskList.innerHTML = "";
+    if(entry.tasks.length === 0){
+      const li = document.createElement("li");
+      li.className = "empty-line";
+      li.textContent = "no tasks logged — add one below";
+      taskList.appendChild(li);
+    } else {
+      const sorted = [...entry.tasks].sort((a,b)=>{
+        if(!a.time) return 1;
+        if(!b.time) return -1;
+        return a.time.localeCompare(b.time);
+      });
+      sorted.forEach(t=>{
+        const li = document.createElement("li");
+        li.className = "task" + (t.done ? " done" : "");
+
+        const check = document.createElement("button");
+        check.className = "check" + (t.done ? " done" : "");
+        check.setAttribute("aria-label", t.done ? "Mark not done" : "Mark done");
+        check.onclick = ()=>{ t.done = !t.done; save(); render(); };
+
+        const time = document.createElement("span");
+        time.className = "task-time";
+        time.textContent = t.time || "";
+
+        const text = document.createElement("span");
+        text.className = "task-text";
+        text.textContent = t.text;
+
+        const del = document.createElement("button");
+        del.className = "task-del";
+        del.textContent = "✕";
+        del.setAttribute("aria-label","Delete task");
+        del.onclick = ()=>{ entry.tasks = entry.tasks.filter(x=>x.id !== t.id); save(); render(); };
+
+        li.appendChild(check);
+        if(t.time) li.appendChild(time);
+        li.appendChild(text);
+        li.appendChild(del);
+        taskList.appendChild(li);
+      });
+    }
+
+    diaryText.value = entry.diary || "";
+    diaryPrompt.textContent = promptFor(current);
+    updateWordCount();
+    diaryStreak.textContent = streakLabel();
+  }
+
+  function updateWordCount(){
+    const words = diaryText.value.trim().length === 0 ? 0 : diaryText.value.trim().split(/\s+/).length;
+    diaryWordCount.textContent = words + (words === 1 ? " word" : " words");
+  }
+
+  function streakLabel(){
+    let count = 0;
+    let d = new Date(current);
+    while(true){
+      const k = keyFor(d);
+      const e = store[k];
+      if(e && e.diary && e.diary.trim().length > 0){
+        count++;
+        d.setDate(d.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    if(count === 0) return "";
+    return count + (count === 1 ? " day streak" : " day streak");
+  }
+
+  document.getElementById("addTaskBtn").onclick = ()=>{
+    const input = document.getElementById("taskInput");
+    const timeInput = document.getElementById("taskTime");
+    const val = input.value.trim();
+    if(!val) return;
+    const entry = getEntry(current);
+    entry.tasks.push({ id: Date.now()+"-"+Math.random().toString(36).slice(2), text: val, time: timeInput.value || "", done:false });
+    input.value = ""; timeInput.value = "";
+    save(); render();
+    input.focus();
+  };
+  document.getElementById("taskInput").addEventListener("keydown", e=>{
+    if(e.key === "Enter") document.getElementById("addTaskBtn").click();
+  });
+
+  let diaryTimer = null;
+  diaryText.addEventListener("input", ()=>{
+    const entry = getEntry(current);
+    entry.diary = diaryText.value;
+    clearTimeout(diaryTimer);
+    diaryTimer = setTimeout(save, 250);
+    updateWordCount();
+  });
+
+  function changeDay(delta){
+    pageEl.classList.remove("enter");
+    pageEl.classList.add(delta > 0 ? "fly-next" : "fly-prev");
+    setTimeout(()=>{
+      current.setDate(current.getDate() + delta);
+      render();
+      pageEl.classList.remove("fly-next","fly-prev");
+      pageEl.style.transform = "";
+      pageEl.style.opacity = "";
+      void pageEl.offsetWidth;
+      pageEl.classList.add("enter");
+    }, 220);
+  }
+  document.getElementById("nextDay").onclick = ()=>changeDay(1);
+
+  // ---------- Swipe gestures on the card ----------
+  let touchStartX = 0, touchStartY = 0, touchDX = 0, dragging = false;
+  pageEl.addEventListener("touchstart", e=>{
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchDX = 0;
+    dragging = true;
+    pageEl.classList.add("dragging");
+  }, {passive:true});
+  pageEl.addEventListener("touchmove", e=>{
+    if(!dragging) return;
+    touchDX = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+    if(Math.abs(touchDX) > Math.abs(dy)){
+      pageEl.style.transform = `translateX(${touchDX}px) rotate(${touchDX/30}deg)`;
+      pageEl.style.opacity = String(1 - Math.min(Math.abs(touchDX)/300, 0.5));
+    }
+  }, {passive:true});
+  pageEl.addEventListener("touchend", ()=>{
+    dragging = false;
+    pageEl.classList.remove("dragging");
+    if(touchDX > 70){
+      // swipe right -> previous day
+      pageEl.style.transition = "transform 220ms ease, opacity 220ms ease";
+      pageEl.style.transform = "translateX(140%) rotate(8deg)";
+      pageEl.style.opacity = "0";
+      setTimeout(()=>{
+        pageEl.style.transition = "";
+        current.setDate(current.getDate() - 1);
+        render();
+        pageEl.style.transform = "";
+        pageEl.style.opacity = "";
+        void pageEl.offsetWidth;
+        pageEl.classList.add("enter");
+      }, 220);
+    } else if(touchDX < -70){
+      // swipe left -> next day
+      pageEl.style.transition = "transform 220ms ease, opacity 220ms ease";
+      pageEl.style.transform = "translateX(-140%) rotate(-8deg)";
+      pageEl.style.opacity = "0";
+      setTimeout(()=>{
+        pageEl.style.transition = "";
+        current.setDate(current.getDate() + 1);
+        render();
+        pageEl.style.transform = "";
+        pageEl.style.opacity = "";
+        void pageEl.offsetWidth;
+        pageEl.classList.add("enter");
+      }, 220);
+    } else {
+      pageEl.style.transition = "transform 200ms ease, opacity 200ms ease";
+      pageEl.style.transform = "";
+      pageEl.style.opacity = "";
+      setTimeout(()=>{ pageEl.style.transition = ""; }, 200);
+    }
+  });
+
+  // ---------- Drawer (day list + mode switch) ----------
+  const drawerOverlay = document.getElementById("drawerOverlay");
+  const dayList = document.getElementById("dayList");
+  const archiveLabel = document.getElementById("archiveLabel");
+
+  function refreshDrawerList(){
+    if(archiveLabel){
+      archiveLabel.textContent = (mode === "plan") ? "Archive — plans" : "Archive — log entries";
+    }
+    dayList.innerHTML = "";
+    const keys = Object.keys(store).sort().reverse();
+    const filtered = keys.filter(k=>{
+      const entry = store[k];
+      if(mode === "plan") return entry.tasks && entry.tasks.length > 0;
+      return entry.diary && entry.diary.trim().length > 0;
+    }).slice(0, 60);
+
+    if(filtered.length === 0){
+      dayList.innerHTML = mode === "plan"
+        ? '<div class="drawer-empty">no plans logged yet — add tasks and days appear here</div>'
+        : '<div class="drawer-empty">no log entries yet — write something and days appear here</div>';
+      return;
+    }
+    filtered.forEach(k=>{
+      const [y,m,d] = k.split("-").map(Number);
+      const dt = new Date(y, m-1, d);
+      const entry = store[k];
+      const isCurrent = k === keyFor(current);
+      const row = document.createElement("div");
+      row.className = "day-pick" + (isCurrent ? " current" : "");
+      const preview = mode === "plan"
+        ? entry.tasks.length + (entry.tasks.length === 1 ? " task" : " tasks")
+        : entry.diary.trim().slice(0, 28).replace(/\n/g," ") + (entry.diary.trim().length > 28 ? "…" : "");
+      row.innerHTML = `<span>${fmtDateHand(dt)} <span class="sub">${fmtDateSub(dt)} · ${preview}</span></span>` +
+        '<span class="dot"></span>';
+      row.onclick = ()=>{
+        current = dt; current.setHours(0,0,0,0);
+        drawerOverlay.classList.remove("open");
+        render();
+      };
+      dayList.appendChild(row);
+    });
+  }
+
+  function openDrawer(){
+    refreshDrawerList();
+    drawerOverlay.classList.add("open");
+  }
+  document.getElementById("openDrawer").onclick = openDrawer;
+  drawerOverlay.onclick = (e)=>{ if(e.target === drawerOverlay) drawerOverlay.classList.remove("open"); };
+  document.getElementById("drawerToday").onclick = ()=>{
+    current = new Date(); current.setHours(0,0,0,0);
+    drawerOverlay.classList.remove("open");
+    render();
+  };
+
+  document.getElementById("tabToday").onclick = ()=>{
+    current = new Date(); current.setHours(0,0,0,0);
+    render();
+  };
+
+  // ---------- Mood sheet ----------
+  const moodOverlay = document.getElementById("moodOverlay");
+  document.getElementById("tabMood").onclick = ()=>{ moodOverlay.classList.add("open"); };
+  moodOverlay.onclick = (e)=>{ if(e.target === moodOverlay) moodOverlay.classList.remove("open"); };
+  moodDisplay.onclick = ()=>{ moodOverlay.classList.add("open"); };
+  document.querySelectorAll(".mood-opt").forEach(el=>{
+    el.style.cursor = "pointer";
+    el.onclick = ()=>{
+      const entry = getEntry(current);
+      entry.mood = el.dataset.mood;
+      save();
+      moodOverlay.classList.remove("open");
+      render();
+    };
+  });
+
+  // ---------- Notifications ----------
+  const notifBanner = document.getElementById("notifBanner");
+  const enableNotifBtn = document.getElementById("enableNotifBtn");
+  const supportsNotif = "Notification" in window;
+
+  function updateNotifBanner(){
+    if(!supportsNotif){ notifBanner.style.display = "none"; return; }
+    notifBanner.style.display = (Notification.permission === "default") ? "flex" : "none";
+  }
+  if(enableNotifBtn){
+    enableNotifBtn.onclick = async ()=>{
+      try{ await Notification.requestPermission(); }catch(e){}
+      updateNotifBanner();
+    };
+  }
+  updateNotifBanner();
+
+  function notify(title, body){
+    if(supportsNotif && Notification.permission === "granted"){
+      try{ new Notification(title, { body }); }catch(e){}
+    }
+  }
+
+  const firedTaskReminders = new Set();
+  function checkTaskReminders(){
+    const today = new Date(); today.setHours(0,0,0,0);
+    const entry = getEntry(today);
+    const now = new Date();
+    const nowStr = String(now.getHours()).padStart(2,"0") + ":" + String(now.getMinutes()).padStart(2,"0");
+    entry.tasks.forEach(t=>{
+      if(!t.time || t.done) return;
+      const fireKey = keyFor(today) + "-" + t.id;
+      if(t.time === nowStr && !firedTaskReminders.has(fireKey)){
+        firedTaskReminders.add(fireKey);
+        notify("ERROR REMINDER", t.text);
+      }
+    });
+  }
+  setInterval(checkTaskReminders, 15000);
+
+  // ---------- Quick timer ----------
+  const timerOverlay = document.getElementById("timerOverlay");
+  const timerDisplay = document.getElementById("timerDisplay");
+  const timerControls = document.getElementById("timerControls");
+  const timerPresets = document.getElementById("timerPresets");
+  let timerEndAt = null;
+  let timerLabel = "";
+  let timerInterval = null;
+
+  function fmtRemaining(ms){
+    const totalSec = Math.max(0, Math.round(ms/1000));
+    const m = Math.floor(totalSec/60);
+    const s = totalSec % 60;
+    return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+  }
+  function startTimer(minutes){
+    timerEndAt = Date.now() + minutes*60000;
+    timerLabel = minutes + " MIN TIMER";
+    timerControls.style.display = "flex";
+    tickTimer();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(tickTimer, 1000);
+  }
+  function tickTimer(){
+    if(!timerEndAt) return;
+    const remaining = timerEndAt - Date.now();
+    if(remaining <= 0){
+      timerDisplay.textContent = "00:00";
+      clearInterval(timerInterval);
+      timerControls.style.display = "none";
+      notify("TIME'S UP", timerLabel + " FINISHED");
+      try{
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        osc.frequency.value = 880;
+        osc.connect(ctx.destination);
+        osc.start(); setTimeout(()=>{osc.stop(); ctx.close();}, 250);
+      }catch(e){}
+      timerEndAt = null;
+      return;
+    }
+    timerDisplay.textContent = fmtRemaining(remaining);
+  }
+  timerPresets.querySelectorAll("button").forEach(btn=>{
+    btn.onclick = ()=>{
+      if(supportsNotif && Notification.permission === "default") Notification.requestPermission();
+      startTimer(Number(btn.dataset.min));
+    };
+  });
+  document.getElementById("timerCustomStart").onclick = ()=>{
+    const v = Number(document.getElementById("timerCustomMin").value);
+    if(v > 0){
+      if(supportsNotif && Notification.permission === "default") Notification.requestPermission();
+      startTimer(v);
+    }
+  };
+  document.getElementById("timerCancel").onclick = ()=>{
+    clearInterval(timerInterval);
+    timerEndAt = null;
+    timerDisplay.textContent = "00:00";
+    timerControls.style.display = "none";
+  };
+  document.getElementById("tabTimer").onclick = ()=>{ timerOverlay.classList.add("open"); };
+  timerOverlay.onclick = (e)=>{ if(e.target === timerOverlay) timerOverlay.classList.remove("open"); };
+
+  render();
+})();
+</script>
+</body>
+</html>
